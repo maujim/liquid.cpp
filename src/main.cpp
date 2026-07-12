@@ -81,6 +81,7 @@ int main(const int argc, const char* argv[]) {
     constexpr std::string_view supported_model = "LiquidAI/LFM2.5-350M-MLX-bf16";
     std::string_view model_id = supported_model;
     std::optional<std::string> prompt;
+    bool tokenize = false;
     for (int argument = 1; argument < argc; ++argument) {
         const std::string_view option{argv[argument]};
         if (option == "-hf") {
@@ -99,15 +100,31 @@ int main(const int argc, const char* argv[]) {
                 return 1;
             }
             prompt = argv[argument];
+        } else if (option == "--tokenize") {
+            tokenize = true;
         } else {
             std::cerr << "Unknown option: " << option << '\n';
             std::cerr << "Usage: liquid [-hf " << supported_model
-                      << "] [-p|--prompt PROMPT]\n";
+                      << "] [-p|--prompt PROMPT] [--tokenize]\n";
             return 1;
         }
     }
 
+    if (tokenize && !prompt) {
+        std::cerr << "--tokenize requires a prompt supplied with -p or --prompt.\n";
+        return 1;
+    }
+
     if (prompt) {
+        if (tokenize) {
+            const auto model = find_model();
+            if (!model) {
+                std::cerr << "LFM2.5-350M MLX/BF16 model was not found in ~/.cache/huggingface.\n";
+                return 1;
+            }
+            std::cout << "using tokenizer config from "
+                      << (*model / "tokenizer_config.json").string() << '\n';
+        }
         std::cout << *prompt << '\n';
         return 0;
     }
