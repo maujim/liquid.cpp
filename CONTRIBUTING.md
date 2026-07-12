@@ -40,6 +40,15 @@ Run the executable directly with either supported form:
 ./build/dev/liquid -hf LiquidAI/LFM2.5-350M-MLX-bf16
 ```
 
+## Project layout
+
+- `include/liquid/` — public headers
+- `src/` — implementation and executable entry point
+- `tests/` — tests registered with CTest
+
+The target named `liquid_lib` holds reusable code. The `liquid` executable and
+tests link against it. Add new `.cpp` files to `add_library` in `CMakeLists.txt`.
+
 ## Contributor workflow
 
 Keep changes small and easy to inspect. Add or update tests when behavior
