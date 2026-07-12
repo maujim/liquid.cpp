@@ -4,6 +4,14 @@ project(liquid VERSION 0.1.0 LANGUAGES CXX)
 
 option(LIQUID_BUILD_TESTS "Build the test suite" ON)
 
+include(FetchContent)
+FetchContent_Declare(
+    nlohmann_json
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(nlohmann_json)
+
 add_library(liquid_lib
     src/greeting.cpp
 )
@@ -14,6 +22,7 @@ target_include_directories(liquid_lib
 )
 
 target_compile_features(liquid_lib PUBLIC cxx_std_20)
+target_link_libraries(liquid_lib PUBLIC nlohmann_json::nlohmann_json)
 
 if(MSVC)
     target_compile_options(liquid_lib PRIVATE /W4 /permissive-)
