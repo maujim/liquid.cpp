@@ -1,4 +1,5 @@
 #include "liquid/greeting.hpp"
+#include "liquid/tokenizer.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -81,6 +82,7 @@ int main(const int argc, const char* argv[]) {
     constexpr std::string_view supported_model = "LiquidAI/LFM2.5-350M-MLX-bf16";
     std::string_view model_id = supported_model;
     std::optional<std::string> prompt;
+    std::optional<std::string> text_to_tokenize;
     for (int argument = 1; argument < argc; ++argument) {
         const std::string_view option{argv[argument]};
         if (option == "-hf") {
@@ -99,12 +101,59 @@ int main(const int argc, const char* argv[]) {
                 return 1;
             }
             prompt = argv[argument];
+        } else if (option == "--tokenize") {
+            if (++argument >= argc) {
+                std::cerr << "--tokenize requires text.\n";
+                return 1;
+            }
+            text_to_tokenize = argv[argument];
         } else {
             std::cerr << "Unknown option: " << option << '\n';
             std::cerr << "Usage: liquid [-hf " << supported_model
-                      << "] [-p|--prompt PROMPT]\n";
+                      << "] [-p|--prompt PROMPT] [--tokenize TEXT]\n";
             return 1;
         }
+    }
+
+    if (prompt && text_to_tokenize) {
+        std::cerr << "--tokenize cannot be combined with -p or --prompt.\n";
+        return 1;
+    }
+
+    if (text_to_tokenize) {
+        const auto model = find_model();
+        if (!model) {
+            std::cerr << "LFM2.5-350M MLX/BF16 model was not found in ~/.cache/huggingface.\n";
+            return 1;
+        }
+
+        const fs::path config_path = *model / "tokenizer_config.json";
+        const auto config = read_text_file(config_path);
+        if (!config) {
+            std::cerr << "Failed to read " << config_path.string() << ".\n";
+            return 1;
+        }
+
+        std::cout << "using tokenizer config from " << config_path.string() << '\n';
+        try {
+            const auto parsed_config = nlohmann::json::parse(*config);
+            std::cout << "tokenizer config:\n" << parsed_config.dump(2) << '\n';
+        } catch (const nlohmann::json::parse_error& error) {
+            std::cerr << "Failed to parse tokenizer config: " << error.what() << '\n';
+            return 1;
+        }
+        std::cout << "input: " << *text_to_tokenize << '\n';
+        const liquid::Tokenizer tokenizer;
+        const auto tokens = tokenizer.tokenize(*text_to_tokenize);
+        std::cout << "tokens: [";
+        for (std::size_t index = 0; index < tokens.size(); ++index) {
+            if (index != 0) {
+                std::cout << ", ";
+            }
+            std::cout << tokens[index];
+        }
+        std::cout << "]\n";
+        return 0;
     }
 
     if (prompt) {
