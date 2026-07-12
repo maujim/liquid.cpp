@@ -18,14 +18,27 @@ build() {
   cmake --build --preset dev
 }
 
+run_binary() {
+  printf '[%s] Running...\n' "$(date '+%H:%M:%S')"
+  if [[ "$#" -gt 0 ]]; then
+    ./build/dev/liquid "$@"
+  else
+    ./build/dev/liquid "your name"
+  fi
+}
+
 # Configure once so this also works from a clean checkout.
 cmake --preset dev || exit $?
-build || true
+if build; then
+  run_binary "$@"
+fi
 
 if command -v fswatch >/dev/null 2>&1; then
-  fswatch -o --event Created --event Updated --event Removed --event Renamed \
+    fswatch -o --event Created --event Updated --event Removed --event Renamed \
     "${WATCH_PATHS[@]}" | while read -r _; do
-      build || true
+      if build; then
+        run_binary "$@"
+      fi
     done
 else
   echo "fswatch not found; polling for changes every second."
@@ -40,7 +53,9 @@ else
     )
 
     if [[ -n "$previous_hash" && "$current_hash" != "$previous_hash" ]]; then
-      build || true
+      if build; then
+        run_binary "$@"
+      fi
     fi
 
     previous_hash=$current_hash
