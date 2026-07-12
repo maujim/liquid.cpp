@@ -95,7 +95,7 @@ std::optional<fs::path> find_model() {
 
 }  // namespace
 
-int main() {
+int main(const int argc, const char* argv[]) {
     std::cout << R"FIGLET( _ _             _     _                   
 | (_) __ _ _   _(_) __| |  ___ _ __  _ __  
 | | |/ _` | | | | |/ _` | / __| '_ \| '_ \ 
@@ -103,6 +103,28 @@ int main() {
 |_|_|\__, |\__,_|_|\__,_(_)___| .__/| .__/ 
         |_|                   |_|   |_|    
 )FIGLET";
+
+    constexpr std::string_view supported_model = "LiquidAI/LFM2.5-350M-MLX-bf16";
+    std::string_view model_id;
+    if (argc == 2 && std::string_view{argv[1]} == "--default") {
+        model_id = supported_model;
+    } else if (argc >= 2 && std::string_view{argv[1]} == "-hf") {
+        if (argc < 3) {
+            std::cerr << "-hf requires a model identifier.\n";
+            return 1;
+        }
+        model_id = argv[2];
+        if (model_id != supported_model) {
+            std::cerr << "The model '" << model_id << "' is not currently supported.\n";
+            return 1;
+        }
+    } else {
+        std::cerr << "Usage: liquid --default\n"
+                  << "       liquid -hf " << supported_model << '\n';
+        return 1;
+    }
+
+    std::cout << "Model: " << model_id << '\n';
 
     const auto model = find_model();
     if (!model) {
