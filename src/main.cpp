@@ -62,16 +62,6 @@ std::optional<std::string> read_header(const fs::path& weights) {
     return header;
 }
 
-void print_first_lines(const nlohmann::json& header, const std::size_t max_lines) {
-    std::istringstream input{header.dump(2)};
-    std::string line;
-    std::size_t line_number = 0;
-    while (line_number < max_lines && std::getline(input, line)) {
-        std::cout << line << '\n';
-        ++line_number;
-    }
-}
-
 std::optional<fs::path> find_model() {
     const char* home = std::getenv("HOME");
     if (home == nullptr) {
@@ -105,7 +95,7 @@ std::optional<fs::path> find_model() {
 
 }  // namespace
 
-int main(const int argc, const char* argv[]) {
+int main() {
     std::cout << R"FIGLET( _ _             _     _                   
 | (_) __ _ _   _(_) __| |  ___ _ __  _ __  
 | | |/ _` | | | | |/ _` | / __| '_ \| '_ \ 
@@ -113,8 +103,6 @@ int main(const int argc, const char* argv[]) {
 |_|_|\__, |\__,_|_|\__,_(_)___| .__/| .__/ 
         |_|                   |_|   |_|    
 )FIGLET";
-
-    const std::string_view name = argc > 1 ? argv[1] : "world";
 
     const auto model = find_model();
     if (!model) {
@@ -135,8 +123,14 @@ int main(const int argc, const char* argv[]) {
     }
     try {
         const auto parsed_header = nlohmann::json::parse(*header);
-        std::cout << "First 10 lines of safetensors JSON header:\n";
-        print_first_lines(parsed_header, 10);
+        std::cout << "Safetensors tensors:\n";
+        for (const auto& [name, tensor] : parsed_header.items()) {
+            if (name == "__metadata__") {
+                continue;
+            }
+            std::cout << "  " << name << ": shape "
+                      << tensor.at("shape").dump() << '\n';
+        }
     } catch (const nlohmann::json::parse_error& error) {
         std::cerr << "Failed to parse the safetensors JSON header: " << error.what() << '\n';
         return 1;
@@ -147,8 +141,6 @@ int main(const int argc, const char* argv[]) {
         std::cerr << "Failed to allocate " << bytes << " bytes for model weights.\n";
         return 1;
     }
-    std::cout << "Allocated model buffer.\n";
-    std::cout << liquid::greeting(name) << '\n';
     std::free(memory);
     return 0;
 }

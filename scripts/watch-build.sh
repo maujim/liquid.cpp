@@ -20,11 +20,7 @@ build() {
 
 run_binary() {
   printf '[%s] Running...\n' "$(date '+%H:%M:%S')"
-  if [[ "$#" -gt 0 ]]; then
-    ./build/dev/liquid "$@"
-  else
-    ./build/dev/liquid "your name"
-  fi
+  ./build/dev/liquid
 }
 
 # Configure once so this also works from a clean checkout.
