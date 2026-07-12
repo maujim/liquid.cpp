@@ -28,12 +28,6 @@ cmake --build --preset dev
 ./build/dev/liquid -hf LiquidAI/LFM2.5-350M-MLX-bf16
 ```
 
-For the normal development loop:
-
-```sh
-./scripts/dev.sh
-```
-
 ## Run tests
 
 ```sh

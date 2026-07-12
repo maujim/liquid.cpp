@@ -33,12 +33,6 @@ cmake --build --preset dev
 ctest --preset dev
 ```
 
-The development shortcut performs configure, build, and a default run:
-
-```sh
-./scripts/dev.sh
-```
-
 Run the executable directly with either supported form:
 
 ```sh
