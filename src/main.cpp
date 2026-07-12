@@ -35,31 +35,12 @@ std::string human_size(const std::uintmax_t bytes) {
     return output.str();
 }
 
-std::optional<std::string> read_header(const fs::path& weights) {
-    std::ifstream input{weights, std::ios::binary};
+std::optional<std::string> read_text_file(const fs::path& path) {
+    std::ifstream input{path};
     if (!input) {
         return std::nullopt;
     }
-
-    std::array<unsigned char, 8> length_bytes{};
-    if (!input.read(reinterpret_cast<char*>(length_bytes.data()), length_bytes.size())) {
-        return std::nullopt;
-    }
-
-    std::uint64_t header_length = 0;
-    for (std::size_t i = 0; i < length_bytes.size(); ++i) {
-        header_length |= static_cast<std::uint64_t>(length_bytes[i]) << (i * 8);
-    }
-
-    if (header_length > static_cast<std::uint64_t>(fs::file_size(weights) - length_bytes.size())) {
-        return std::nullopt;
-    }
-
-    std::string header(static_cast<std::size_t>(header_length), '\0');
-    if (!input.read(header.data(), static_cast<std::streamsize>(header.size()))) {
-        return std::nullopt;
-    }
-    return header;
+    return std::string{std::istreambuf_iterator<char>{input}, {}};
 }
 
 std::optional<fs::path> find_model() {
@@ -138,21 +119,16 @@ int main(const int argc, const char* argv[]) {
     std::cout << "loading into memory... (" << bytes << " bytes, "
               << human_size(bytes) << ")\n";
 
-    const auto header = read_header(weights);
-    if (!header) {
-        std::cerr << "Failed to read the safetensors JSON header.\n";
+    const fs::path index_path = *model / "model.safetensors.index.json";
+    const auto index = read_text_file(index_path);
+    if (!index) {
+        std::cerr << "Failed to read model.safetensors.index.json.\n";
         return 1;
     }
     try {
-        const auto parsed_header = nlohmann::json::parse(*header);
-        std::cout << "Safetensors tensors:\n";
-        for (const auto& [name, tensor] : parsed_header.items()) {
-            if (name == "__metadata__") {
-                continue;
-            }
-            std::cout << "  " << name << ": shape "
-                      << tensor.at("shape").dump() << '\n';
-        }
+        const auto parsed_index = nlohmann::json::parse(*index);
+        std::cout << "model.safetensors.index.json:\n";
+        std::cout << parsed_index.dump(2) << '\n';
     } catch (const nlohmann::json::parse_error& error) {
         std::cerr << "Failed to parse the safetensors JSON header: " << error.what() << '\n';
         return 1;
