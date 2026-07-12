@@ -20,7 +20,7 @@ build() {
 
 run_binary() {
   printf '[%s] Running...\n' "$(date '+%H:%M:%S')"
-  ./build/dev/liquid
+  ./build/dev/liquid --default
 }
 
 # Configure once so this also works from a clean checkout.
