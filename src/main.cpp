@@ -1,4 +1,5 @@
 #include "liquid/greeting.hpp"
+#include "liquid/tokenizer.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -142,7 +143,16 @@ int main(const int argc, const char* argv[]) {
             return 1;
         }
         std::cout << "input: " << *text_to_tokenize << '\n';
-        std::cout << "tokens: []\n";
+        const liquid::Tokenizer tokenizer;
+        const auto tokens = tokenizer.tokenize(*text_to_tokenize);
+        std::cout << "tokens: [";
+        for (std::size_t index = 0; index < tokens.size(); ++index) {
+            if (index != 0) {
+                std::cout << ", ";
+            }
+            std::cout << tokens[index];
+        }
+        std::cout << "]\n";
         return 0;
     }
 

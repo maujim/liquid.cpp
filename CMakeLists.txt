@@ -14,6 +14,7 @@ FetchContent_MakeAvailable(nlohmann_json)
 
 add_library(liquid_lib
     src/greeting.cpp
+    src/tokenizer.cpp
 )
 
 target_include_directories(liquid_lib
