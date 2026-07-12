@@ -33,11 +33,12 @@ cmake --build --preset dev
 ctest --preset dev
 ```
 
-Run the executable directly with either supported form:
+Run the executable directly. It uses the project model unless `-hf` is given:
 
 ```sh
-./build/dev/liquid --default
+./build/dev/liquid
 ./build/dev/liquid -hf LiquidAI/LFM2.5-350M-MLX-bf16
+./build/dev/liquid --prompt "Write a haiku about Toronto"
 ```
 
 ## Project layout
